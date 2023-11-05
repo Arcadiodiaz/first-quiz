@@ -6,4 +6,8 @@ public class NotEnoughMoneyException extends Exception {
     super("Not enough money inserted.");
   }
   
+  public NotEnoughMoneyException(String message) {
+    super(message);
+  }
+  
 }

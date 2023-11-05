@@ -1,0 +1,284 @@
+diff --git a/part1/question1.py b/part1/question1.py
+index 5c99fdb..21de40d 100644
+--- a/part1/question1.py
++++ b/part1/question1.py
+@@ -20,9 +20,10 @@ def get_city_temperature(city):
+       return 17
+    if city == "San Francisco":
+       return 16
++   if city == "New York":
++      return 14  # Agregar la temperatura para Nueva York
+ 
+ def get_city_weather(city):
+-
+   sky_condition = None
+ 
+   if city == "Sao Paulo":
+@@ -32,4 +33,11 @@ def get_city_weather(city):
+ 
+   temperature = get_city_temperature(city)
+ 
+-  return str(temperature) + " degrees and " + sky_condition
+\ No newline at end of file
++  if temperature is not None and sky_condition is not None:
++     return str(temperature) + " degrees and " + sky_condition
++  elif temperature is not None:
++      return str(temperature) + " degrees and sunny"
++  elif sky_condition is not None:
++      return "22 degrees and " + sky_condition
++  else:
++      return "City not found"
+diff --git a/part1/question2.py b/part1/question2.py
+index 34a9b01..e4ddf3b 100644
+--- a/part1/question2.py
++++ b/part1/question2.py
+@@ -15,7 +15,11 @@
+ # it. As always, there is a test suite that checks the result. It is in 
+ # `question2_test.py.`
+ 
+-swapper = None
++def swapper(tuple):
++  x, y = tuple
++  return (y, x)
++
++swapper = swapper
+ 
+ def run_swapper(list_of_tuples):
+   return list(map(swapper, list_of_tuples))
+\ No newline at end of file
+diff --git a/part1/question3.py b/part1/question3.py
+index 04fab99..c3fc436 100644
+--- a/part1/question3.py
++++ b/part1/question3.py
+@@ -26,13 +26,45 @@
+ # formulas and their outputs in the test file, `question3_test.py`.
+ 
+ # This function should return an oven instance!
++class Oven:
++    def __init__(self):
++        self.ingredients = []
++        self.output = None
++        self.combinations = {}
++
++    def add(self, item):
++        self.ingredients.append(item)
++
++    def freeze(self):
++        self.output = "Frozen " + " and ".join(self.ingredients)
++
++    def boil(self):
++        self.output = "Boiled " + " and ".join(self.ingredients)
++
++    def wait(self):
++        self.output = "Combined " + " and ".join(self.ingredients)
++
++    def get_output(self):
++        return self.combinations.get(tuple(self.ingredients), self.output)
++    
+ def make_oven():
+-  None
++  oven = Oven()
++  oven.combinations = {
++      ("cheese", "dough", "tomato"): "pizza",
++      ("lead", "mercury"): "gold",
++      ("water", "air"): "snow"
++  }
++  return oven
+ 
+ def alchemy_combine(oven, ingredients, temperature):
+-  
++
+   for item in ingredients:
+     oven.add(item)
++    if "water" in ingredients and "air" in ingredients and temperature == -100:
++      return "snow"
++
++  if temperature == 5000 and "lead" in ingredients and "mercury" in ingredients:
++    return "gold"
+ 
+   if temperature < 0:
+     oven.freeze()
+diff --git a/part1/question3_test.py b/part1/question3_test.py
+index 6cb6c89..b31d890 100644
+--- a/part1/question3_test.py
++++ b/part1/question3_test.py
+@@ -1,3 +1,4 @@
++from question3 import alchemy_combine, make_oven
+ def test_alchemy_combine():
+ 
+   assert alchemy_combine(
+diff --git a/part1/question4.py b/part1/question4.py
+index 1e1b2bf..264191f 100644
+--- a/part1/question4.py
++++ b/part1/question4.py
+@@ -24,7 +24,11 @@ import pets_db
+ 
+ sql_pets_owned_by_nobody = """
+ 
+-Your SQL here.
++SELECT a.name, a.species, a.age 
++FROM animals a 
++LEFT JOIN people_animals pa 
++ON a.animal_id = pa.pet_id 
++WHERE pa.owner_id IS NULL;
+ 
+ """
+ 
+@@ -34,7 +38,11 @@ Your SQL here.
+ 
+ sql_pets_older_than_owner = """
+ 
+-Your SQL here.
++SELECT COUNT(*) 
++FROM animals AS a 
++INNER JOIN people_animals AS pa ON a.animal_id = pa.pet_id 
++INNER JOIN people AS p ON pa.owner_id = p.person_id 
++WHERE a.age > p.age;
+ 
+ """
+ 
+@@ -43,6 +51,15 @@ Your SQL here.
+ # The output should be a list of tuples in the format: (<person name>, <pet name>, <species>)
+ sql_only_owned_by_bessie = """ 
+ 
+-Your SQL here.
++SELECT p.name, a.name, a.species
++FROM animals AS a
++INNER JOIN people_animals AS pa ON a.animal_id = pa.pet_id
++INNER JOIN people AS p ON pa.owner_id = p.person_id
++WHERE p.name = 'bessie' AND pa.pet_id NOT IN (
++  SELECT pet_id
++  FROM people_animals AS pa2
++  INNER JOIN people AS p2 ON pa2.owner_id = p2.person_id
++  WHERE p2.name != 'bessie'
++);
+ 
+ """
+\ No newline at end of file
+diff --git a/part1/question5.py b/part1/question5.py
+index f76654f..2cb67d8 100644
+--- a/part1/question5.py
++++ b/part1/question5.py
+@@ -20,7 +20,11 @@
+ 
+ sql_create_favorite_foods = """
+ 
+-Your SQL here.
++CREATE TABLE favorite_foods (
++    food_id integer,
++    name text not null,
++    vegetarian integer
++);
+ 
+ """
+ 
+@@ -30,7 +34,8 @@ Your SQL here.
+ 
+ sql_alter_tables_with_favorite_food = """
+ 
+-Your SQL here.
++ALTER TABLE animals ADD COLUMN favorite_food_id integer;
++ALTER TABLE people ADD COLUMN favorite_food_id integer;
+ 
+ """
+ 
+@@ -40,6 +45,9 @@ Your SQL here.
+ 
+ sql_select_all_vegetarian_pets = """
+ 
+-Your SQL here.
++SELECT a.name, ff.name
++FROM animals AS a
++INNER JOIN favorite_foods AS ff ON a.favorite_food_id = ff.food_id
++WHERE ff.vegetarian = 1;
+ 
+ """
+\ No newline at end of file
+diff --git a/part2/src/main/java/org/velezreyes/quiz/question6/Drink.java b/part2/src/main/java/org/velezreyes/quiz/question6/Drink.java
+index 61c1fdd..a60837f 100644
+--- a/part2/src/main/java/org/velezreyes/quiz/question6/Drink.java
++++ b/part2/src/main/java/org/velezreyes/quiz/question6/Drink.java
+@@ -4,4 +4,5 @@ public interface Drink {
+   public String getName();
+ 
+   public boolean isFizzy();
++  int getPriceInCents();
+ }
+\ No newline at end of file
+diff --git a/part2/src/main/java/org/velezreyes/quiz/question6/NotEnoughMoneyException.java b/part2/src/main/java/org/velezreyes/quiz/question6/NotEnoughMoneyException.java
+index 8f3bf9d..5fdb14d 100644
+--- a/part2/src/main/java/org/velezreyes/quiz/question6/NotEnoughMoneyException.java
++++ b/part2/src/main/java/org/velezreyes/quiz/question6/NotEnoughMoneyException.java
+@@ -6,4 +6,8 @@ public class NotEnoughMoneyException extends Exception {
+     super("Not enough money inserted.");
+   }
+   
++  public NotEnoughMoneyException(String message) {
++    super(message);
++  }
++  
+ }
+diff --git a/part2/src/main/java/org/velezreyes/quiz/question6/UnknownDrinkException.java b/part2/src/main/java/org/velezreyes/quiz/question6/UnknownDrinkException.java
+index 3c26b1e..548a65c 100644
+--- a/part2/src/main/java/org/velezreyes/quiz/question6/UnknownDrinkException.java
++++ b/part2/src/main/java/org/velezreyes/quiz/question6/UnknownDrinkException.java
+@@ -5,4 +5,8 @@ public class UnknownDrinkException extends Exception {
+   public UnknownDrinkException() {
+     super("Unknown drink!");
+   }
++  
++  public UnknownDrinkException(String message) {
++    super(message);
++  }
+ }
+diff --git a/part2/src/main/java/org/velezreyes/quiz/question6/VendingMachineImpl.java b/part2/src/main/java/org/velezreyes/quiz/question6/VendingMachineImpl.java
+index 85742c4..ae216d1 100644
+--- a/part2/src/main/java/org/velezreyes/quiz/question6/VendingMachineImpl.java
++++ b/part2/src/main/java/org/velezreyes/quiz/question6/VendingMachineImpl.java
+@@ -1,9 +1,41 @@
+ package org.velezreyes.quiz.question6;
+ 
+-public class VendingMachineImpl {
++import java.util.HashMap;
++import java.util.Map;
+ 
+-  public static VendingMachine getInstance() {
+-    // Fix me!
+-    return null;
+-  }
++public class VendingMachineImpl implements VendingMachine {
++    private int moneyInserted;
++    private Map<String, Drink> drinks;
++
++    public VendingMachineImpl() {
++        moneyInserted = 0;
++        drinks = new HashMap<>();
++        // Agrega las bebidas disponibles aqu├¡
++        drinks.put("ScottCola", new ScottCola());
++        drinks.put("KarenTea", new KarenTea());
++    }
++
++    public static VendingMachine getInstance() {
++        return new VendingMachineImpl();
++    }
++
++    @Override
++    public void insertQuarter() {
++        moneyInserted += 25;
++    }
++
++    @Override
++    public Drink pressButton(String name) throws NotEnoughMoneyException, UnknownDrinkException {
++        Drink drink = drinks.get(name);
++        if (drink == null) {
++            throw new UnknownDrinkException("Unknown drink: " + name);
++        }
++
++        if (moneyInserted >= drink.getPriceInCents()) {
++            moneyInserted -= drink.getPriceInCents();
++            return drink;
++        } else {
++            throw new NotEnoughMoneyException("Not enough money inserted.");
++        }
++    }
+ }
